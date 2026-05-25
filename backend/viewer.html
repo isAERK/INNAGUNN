@@ -1,0 +1,1500 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>INNA Archive Viewer</title>
+  <style>
+
+    :root {
+      --bg-top: #e7f8dc;
+      --bg-bottom: #f8fff4;
+      --panel: rgba(255,255,255,.84);
+      --panel-strong: rgba(255,255,255,.94);
+      --panel-soft: rgba(241, 255, 235, .84);
+      --ink: #183d2a;
+      --muted: #5f7d66;
+      --line: rgba(120, 190, 118, .34);
+      --accent: #8fdd55;
+      --accent-deep: #4f9d3a;
+      --mint: #b8f27b;
+      --mint-deep: #68b84e;
+      --sky: #b8efff;
+      --orange: #ffc961;
+      --orange-deep: #ed9f22;
+      --rose: #ffa6c8;
+      --shadow: 0 18px 42px rgba(64, 128, 75, .17);
+      --shadow-soft: 0 10px 28px rgba(89, 150, 93, .12);
+      --radius: 26px;
+      --radius-small: 18px;
+      --glass-border: 1px solid rgba(255,255,255,.58);
+      --shine: inset 0 1px 0 rgba(255,255,255,.96), inset 0 -10px 26px rgba(157, 226, 110, .06);
+    }
+    * { box-sizing: border-box; }
+    html { min-height: 100%; }
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: "Segoe UI", "Inter", ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+      background:
+        radial-gradient(circle at 10% 10%, rgba(255,255,255,.96) 0 9%, rgba(255,255,255,0) 10% 100%),
+        radial-gradient(circle at 86% 8%, rgba(196, 244, 127, .66) 0 8%, rgba(196, 244, 127, 0) 9% 100%),
+        radial-gradient(circle at 78% 78%, rgba(179, 240, 255, .28) 0 11%, rgba(179, 240, 255, 0) 12% 100%),
+        linear-gradient(180deg, var(--bg-top), var(--bg-bottom) 54%, #f6fff2 100%);
+      color: var(--ink);
+      position: relative;
+      overflow-x: hidden;
+    }
+    body::before,
+    body::after {
+      content: "";
+      position: fixed;
+      z-index: -1;
+      pointer-events: none;
+      border-radius: 999px;
+      filter: blur(10px);
+      opacity: .72;
+    }
+    body::before {
+      width: 370px;
+      height: 370px;
+      left: -120px;
+      top: 88px;
+      background: radial-gradient(circle at 35% 35%, rgba(255,255,255,.96), rgba(196, 244, 127, .52) 60%, rgba(196, 244, 127, 0) 73%);
+    }
+    body::after {
+      width: 330px;
+      height: 330px;
+      right: -76px;
+      bottom: 66px;
+      background: radial-gradient(circle at 34% 34%, rgba(255,255,255,.95), rgba(176, 237, 198, .50) 60%, rgba(176, 237, 198, 0) 74%);
+    }
+
+    a { color: #2f8f46; }
+    code, pre {
+      font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+    }
+
+    header {
+      position: sticky;
+      top: 0;
+      z-index: 20;
+      margin: 14px 14px 0;
+      border-radius: 30px;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.90), rgba(241, 255, 235, .82)),
+        linear-gradient(120deg, rgba(183, 242, 123, .38), rgba(188, 238, 255, .13));
+      backdrop-filter: blur(18px) saturate(1.10);
+      border: var(--glass-border);
+      box-shadow: var(--shadow), inset 0 1px 0 rgba(255,255,255,.97);
+      padding: 14px 18px;
+      display: flex;
+      gap: 16px;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .brand {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      min-width: max-content;
+    }
+    .logo {
+      width: 42px;
+      height: 42px;
+      border-radius: 50%;
+      background:
+        radial-gradient(circle at 30% 28%, rgba(255,255,255,.98), rgba(255,255,255,.55) 26%, rgba(255,255,255,0) 28%),
+        linear-gradient(180deg, #caff7d, #83db51 52%, #4eaa3c);
+      border: 1px solid rgba(255,255,255,.86);
+      box-shadow:
+        inset 0 2px 0 rgba(255,255,255,.95),
+        inset 0 -8px 18px rgba(44, 122, 46, .20),
+        0 10px 22px rgba(82, 158, 77, .23);
+      position: relative;
+      flex: none;
+    }
+    .logo::after {
+      content: "";
+      position: absolute;
+      inset: 8px;
+      border-radius: 999px;
+      border: 2px solid rgba(255,255,255,.72);
+      opacity: .88;
+    }
+    h1 {
+      font-size: 19px;
+      letter-spacing: .02em;
+      margin: 0;
+      color: #1f4c30;
+      text-shadow: 0 1px 0 rgba(255,255,255,.75);
+    }
+
+    .profile-chip {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: linear-gradient(180deg, rgba(255,255,255,.96), rgba(241, 255, 235, .82));
+      border: var(--glass-border);
+      box-shadow: var(--shadow-soft), inset 0 1px 0 rgba(255,255,255,.98);
+      min-width: 0;
+    }
+    .profile-chip img, .profile-chip .avatar {
+      width: 36px;
+      height: 36px;
+      border-radius: 999px;
+      object-fit: cover;
+      background: linear-gradient(180deg, var(--mint), var(--mint-deep));
+      color: white;
+      display: grid;
+      place-items: center;
+      font-weight: 900;
+      flex: none;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.72);
+    }
+    .profile-chip strong {
+      display: block;
+      max-width: 260px;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-size: 13px;
+    }
+    .profile-chip span.meta-small {
+      display: block;
+      color: var(--muted);
+      font-size: 12px;
+    }
+
+    .toolbar {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      width: min(920px, 100%);
+      min-width: 0;
+    }
+    input, select, button {
+      border: 1px solid rgba(120, 190, 118, .34);
+      border-radius: 18px;
+      background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(243, 255, 237, .90));
+      color: var(--ink);
+      padding: 11px 13px;
+      font: inherit;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.97), 0 6px 14px rgba(127, 184, 113, .08);
+      transition: border-color .16s ease, transform .14s ease, box-shadow .16s ease;
+    }
+    input:focus, select:focus, button:focus {
+      outline: none;
+      border-color: rgba(96, 176, 70, .70);
+      box-shadow: 0 0 0 4px rgba(143, 221, 85, .17), inset 0 1px 0 rgba(255,255,255,.97);
+    }
+    input[type="search"] { flex: 1; min-width: 160px; }
+    button {
+      cursor: pointer;
+      font-weight: 700;
+      color: white;
+      border-color: rgba(255,255,255,.58);
+      background:
+        linear-gradient(180deg, #c9ff82, #83dc50 45%, #4eaa3c);
+      text-shadow: 0 1px 0 rgba(36, 94, 34, .42);
+      box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.94),
+        inset 0 -8px 18px rgba(44, 122, 46, .16),
+        0 10px 18px rgba(82, 158, 77, .18);
+    }
+    button:hover { transform: translateY(-1px); }
+    button.secondary, .buttonlike {
+      background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(242, 255, 236, .90));
+      color: var(--ink);
+      text-shadow: none;
+    }
+    .buttonlike {
+      display: inline-flex;
+      align-items: center;
+      text-decoration: none;
+      border: 1px solid rgba(120, 190, 118, .34);
+      border-radius: 16px;
+      padding: 10px 12px;
+      font: inherit;
+      font-weight: 700;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.96), 0 8px 16px rgba(127, 184, 113, .08);
+    }
+
+    main {
+      display: grid;
+      grid-template-columns: 340px 1fr;
+      min-height: calc(100vh - 94px);
+      gap: 18px;
+      padding: 18px 14px 14px;
+      align-items: start;
+    }
+    aside {
+      border: var(--glass-border);
+      border-radius: 32px;
+      padding: 18px;
+      overflow: auto;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.84), rgba(241, 255, 235, .78)),
+        linear-gradient(180deg, rgba(193, 244, 125, .20), rgba(255,255,255,0));
+      box-shadow: var(--shadow);
+      min-height: calc(100vh - 126px);
+    }
+    .content {
+      padding: 4px;
+      overflow: auto;
+    }
+
+    .course-card {
+      border: var(--glass-border);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.95), rgba(242, 255, 236, .86));
+      border-radius: 24px;
+      padding: 14px 15px;
+      margin-bottom: 12px;
+      cursor: pointer;
+      transition: transform .14s ease, border-color .14s ease, box-shadow .14s ease;
+      box-shadow: var(--shadow-soft);
+      position: relative;
+      overflow: hidden;
+    }
+    .course-card::before {
+      content: "";
+      position: absolute;
+      inset: 0 0 auto 0;
+      height: 52%;
+      background: linear-gradient(180deg, rgba(255,255,255,.74), rgba(255,255,255,0));
+      pointer-events: none;
+    }
+    .course-card:hover { transform: translateY(-2px); }
+    .course-card.active {
+      border-color: rgba(96, 176, 70, .48);
+      box-shadow: 0 20px 34px rgba(82, 158, 77, .18), inset 0 1px 0 rgba(255,255,255,.98);
+      background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(232, 253, 222, .90));
+    }
+    .course-code {
+      position: relative;
+      z-index: 1;
+      font-weight: 800;
+      font-size: 15px;
+      color: #214d31;
+    }
+    .course-name {
+      position: relative;
+      z-index: 1;
+      color: var(--muted);
+      margin-top: 3px;
+    }
+    .course-meta {
+      position: relative;
+      z-index: 1;
+      margin-top: 8px;
+      color: #65836d;
+      font-size: 12px;
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .hero {
+      border: var(--glass-border);
+      border-radius: 34px;
+      padding: 22px 24px;
+      background:
+        radial-gradient(circle at 12% 14%, rgba(255,255,255,.97), rgba(255,255,255,0) 22%),
+        linear-gradient(135deg, rgba(203, 255, 132, .76), rgba(247, 255, 245, .92) 38%, rgba(185, 239, 255, .42) 100%);
+      box-shadow: var(--shadow);
+      position: relative;
+      overflow: hidden;
+    }
+    .hero::after {
+      content: "";
+      position: absolute;
+      right: -50px;
+      top: -54px;
+      width: 190px;
+      height: 190px;
+      border-radius: 999px;
+      background: radial-gradient(circle at 30% 30%, rgba(255,255,255,.95), rgba(255,255,255,.12) 48%, rgba(255,255,255,0) 64%);
+      opacity: .92;
+    }
+    .hero h2 {
+      margin: 0 0 8px;
+      font-size: clamp(22px, 2.4vw, 30px);
+      color: #214d31;
+      position: relative;
+      z-index: 1;
+    }
+    .meta {
+      position: relative;
+      z-index: 1;
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      color: #355b3b;
+      font-size: 13px;
+    }
+    .meta span {
+      border-radius: 999px;
+      padding: 8px 11px;
+      border: 1px solid rgba(255,255,255,.64);
+      background: rgba(255,255,255,.58);
+      backdrop-filter: blur(10px);
+    }
+
+    .grid {
+      display: grid;
+      gap: 14px;
+      grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+      margin: 16px 0;
+    }
+    .stat {
+      border-radius: 26px;
+      padding: 18px;
+      border: var(--glass-border);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.95), rgba(243, 255, 237, .86));
+      box-shadow: var(--shadow-soft);
+      position: relative;
+      overflow: hidden;
+    }
+    .stat::before {
+      content: "";
+      position: absolute;
+      inset: 0 0 auto 0;
+      height: 48%;
+      background: linear-gradient(180deg, rgba(255,255,255,.80), rgba(255,255,255,0));
+    }
+    .stat .num {
+      position: relative;
+      z-index: 1;
+      font-size: 30px;
+      font-weight: 900;
+      color: #275a34;
+      line-height: 1;
+    }
+    .stat .label {
+      position: relative;
+      z-index: 1;
+      margin-top: 7px;
+      font-size: 13px;
+      color: #637e68;
+    }
+
+    .tabs {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin: 16px 0 18px;
+      padding: 10px;
+      border-radius: 999px;
+      background: rgba(255,255,255,.58);
+      border: var(--glass-border);
+      box-shadow: var(--shadow-soft);
+      backdrop-filter: blur(10px);
+      width: fit-content;
+      max-width: 100%;
+    }
+    .tab {
+      appearance: none;
+      border: 1px solid rgba(120, 190, 118, .22);
+      border-radius: 999px;
+      background: rgba(255,255,255,.78);
+      color: #315a39;
+      padding: 10px 14px;
+      font-weight: 700;
+      cursor: pointer;
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.94);
+    }
+    .tab.active {
+      color: #1f4f2d;
+      border-color: rgba(96, 176, 70, .50);
+      background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(232, 253, 222, .90));
+      box-shadow: 0 10px 18px rgba(143, 221, 85, .16), inset 0 1px 0 rgba(255,255,255,.96);
+    }
+
+    .section {
+      border-radius: 30px;
+      border: var(--glass-border);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.96), rgba(246, 255, 242, .88));
+      box-shadow: var(--shadow);
+      margin-bottom: 18px;
+      overflow: hidden;
+    }
+    .section h3 {
+      margin: 0;
+      padding: 18px 20px 12px;
+      font-size: 19px;
+      color: #264f31;
+    }
+    .section h3.blue {
+      color: #277f49;
+    }
+    .section h3.orange {
+      color: #9a6100;
+    }
+    .section h4 {
+      margin: 18px 0 10px;
+      color: #335d3a;
+    }
+    .section-body {
+      padding: 0 18px 18px;
+    }
+
+    details {
+      border: 1px solid rgba(120, 190, 118, .26);
+      border-radius: 24px;
+      background: linear-gradient(180deg, rgba(255,255,255,.97), rgba(246, 255, 242, .84));
+      box-shadow: var(--shadow-soft);
+      margin-top: 12px;
+      overflow: hidden;
+    }
+    summary {
+      list-style: none;
+      cursor: pointer;
+      padding: 14px 16px;
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      justify-content: space-between;
+      font-weight: 700;
+      color: #315b3a;
+      background: linear-gradient(180deg, rgba(255,255,255,.88), rgba(247, 255, 243, .70));
+    }
+    summary::-webkit-details-marker { display: none; }
+    .details-body {
+      padding: 0 14px 14px;
+    }
+
+    .assignment-title-row {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      min-width: 0;
+    }
+    .feedback-icon {
+      display: inline-grid;
+      place-items: center;
+      width: 26px;
+      height: 26px;
+      border-radius: 999px;
+      background: linear-gradient(180deg, #ffd6ec, #ff97c4);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.88);
+      font-size: 14px;
+      flex: none;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 28px;
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: 12px;
+      font-weight: 800;
+      color: #24542f;
+      background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(232, 253, 222, .94));
+      border: 1px solid rgba(120, 190, 118, .30);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.94);
+    }
+    .badge.orange {
+      color: #805300;
+      background: linear-gradient(180deg, #ffeabf, #ffc96e);
+      border-color: rgba(245, 165, 27, .25);
+    }
+    .badge.feedback {
+      color: #84224f;
+      background: linear-gradient(180deg, #ffe6f1, #ffbddb);
+      border-color: rgba(226, 108, 165, .25);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: separate;
+      border-spacing: 0;
+      margin-top: 8px;
+      overflow: hidden;
+      border: 1px solid rgba(120, 190, 118, .24);
+      border-radius: 20px;
+      background: rgba(255,255,255,.80);
+    }
+    thead th {
+      text-align: left;
+      font-size: 12px;
+      letter-spacing: .03em;
+      color: #4b6d53;
+      background: linear-gradient(180deg, rgba(236, 255, 228, .92), rgba(250, 255, 248, .94));
+      padding: 11px 12px;
+      border-bottom: 1px solid rgba(120, 190, 118, .22);
+    }
+    th, td {
+      padding: 11px 12px;
+      vertical-align: top;
+      border-bottom: 1px solid rgba(120, 190, 118, .18);
+    }
+    tbody tr:nth-child(even) td,
+    tbody tr:nth-child(even) th {
+      background: rgba(247, 255, 242, .76);
+    }
+    tbody tr:last-child td,
+    tbody tr:last-child th { border-bottom: 0; }
+
+    .panel {
+      border: 1px solid rgba(120, 190, 118, .22);
+      border-radius: 22px;
+      padding: 14px;
+      background: linear-gradient(180deg, rgba(255,255,255,.97), rgba(247, 255, 242, .86));
+      box-shadow: var(--shadow-soft);
+    }
+    .empty {
+      border-radius: 22px;
+      padding: 18px;
+      border: 1px dashed rgba(120, 190, 118, .32);
+      background: rgba(255,255,255,.70);
+      color: var(--muted);
+      text-align: center;
+    }
+    .muted {
+      color: var(--muted);
+    }
+    .file-list {
+      display: grid;
+      gap: 10px;
+      padding: 0;
+      margin: 10px 0 0;
+      list-style: none;
+    }
+    .file-list li {
+      border: 1px solid rgba(120, 190, 118, .24);
+      border-radius: 20px;
+      padding: 12px;
+      background: linear-gradient(180deg, rgba(255,255,255,.97), rgba(247, 255, 242, .84));
+      box-shadow: var(--shadow-soft);
+    }
+
+    .warning-close {
+      float: right;
+      margin-left: 10px;
+      width: 28px;
+      height: 28px;
+      border-radius: 999px;
+      padding: 0;
+      display: inline-grid;
+      place-items: center;
+      font-size: 15px;
+      line-height: 1;
+    }
+    .archive-warning {
+      background: linear-gradient(180deg, rgba(255, 245, 218, .98), rgba(255, 236, 190, .88));
+      border: 1px solid rgba(246, 184, 64, .45);
+      color: #745000;
+      border-radius: 24px;
+      padding: 13px 14px;
+      margin-bottom: 14px;
+      box-shadow: var(--shadow-soft);
+    }
+    .archive-warning.good {
+      background: linear-gradient(180deg, rgba(227, 255, 220, .98), rgba(200, 247, 190, .88));
+      border-color: rgba(95, 201, 117, .42);
+      color: #246431;
+    }
+    .viewer-note {
+      background: linear-gradient(180deg, rgba(248, 255, 243, .98), rgba(230, 251, 220, .88));
+      border: 1px solid rgba(120, 190, 118, .26);
+      color: #315d39;
+      border-radius: 24px;
+      padding: 13px 14px;
+      margin-bottom: 14px;
+      box-shadow: var(--shadow-soft);
+    }
+
+    .drop {
+      border: var(--glass-border);
+      border-radius: 34px;
+      padding: 30px;
+      text-align: center;
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.92), rgba(246, 255, 242, .84));
+      box-shadow: var(--shadow);
+      margin: 36px auto;
+      max-width: 760px;
+    }
+    .hidden { display: none !important; }
+
+    .preview-shell {
+      position: fixed;
+      inset: 22px;
+      z-index: 100;
+      background: linear-gradient(180deg, rgba(255,255,255,.98), rgba(246, 255, 242, .93));
+      border: var(--glass-border);
+      border-radius: 34px;
+      box-shadow: 0 28px 90px rgba(49, 103, 57, .32);
+      display: grid;
+      grid-template-rows: auto 1fr;
+      overflow: hidden;
+      backdrop-filter: blur(10px);
+    }
+    .preview-header {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      justify-content: space-between;
+      padding: 12px 14px;
+      background: linear-gradient(180deg, rgba(255,255,255,.96), rgba(238, 255, 230, .86));
+      border-bottom: 1px solid rgba(120, 190, 118, .20);
+    }
+    .preview-title {
+      min-width: 0;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+      font-weight: 800;
+      color: #275631;
+    }
+    .preview-actions { display: flex; gap: 8px; flex: none; }
+    .preview-frame { width: 100%; height: 100%; border: 0; background: white; }
+    .preview-backdrop {
+      position: fixed;
+      inset: 0;
+      background: rgba(111, 174, 110, .24);
+      backdrop-filter: blur(4px);
+      z-index: 99;
+    }
+    .open-hint {
+      color: var(--muted);
+      font-size: 12px;
+      margin-left: .35rem;
+    }
+
+    .credit-meter {
+      display: grid;
+      gap: 14px;
+    }
+    .credit-meter-row {
+      display: grid;
+      gap: 8px;
+    }
+    .credit-meter-row > div:first-child {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      color: var(--muted);
+    }
+    .credit-meter-row strong {
+      color: var(--ink);
+    }
+    .credit-bar {
+      height: 18px;
+      border-radius: 999px;
+      overflow: hidden;
+      border: 1px solid rgba(120, 190, 118, .28);
+      background: linear-gradient(180deg, rgba(255,255,255,.88), rgba(232,253,222,.74));
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.95);
+    }
+    .credit-bar > div {
+      height: 100%;
+      border-radius: inherit;
+      background: linear-gradient(180deg, #c9ff82, #83dc50 55%, #4eaa3c);
+      box-shadow: inset 0 1px 0 rgba(255,255,255,.76);
+    }
+    .mini-course-open {
+      padding: 6px 9px;
+      border-radius: 999px;
+      font-size: 12px;
+    }
+
+    @media (max-width: 900px) {
+      header {
+        flex-direction: column;
+        align-items: stretch;
+        margin: 10px 10px 0;
+      }
+      .toolbar { width: 100%; flex-wrap: wrap; }
+      main {
+        grid-template-columns: 1fr;
+        padding: 12px 10px 10px;
+      }
+      aside {
+        min-height: 0;
+        max-height: 40vh;
+      }
+    }
+    @media print {
+      header, aside, .tabs, .viewer-note { display: none; }
+      main { display: block; }
+      body { background: white; }
+      body::before, body::after { display: none; }
+      .section, .hero, .stat, .panel {
+        box-shadow: none;
+        border: 1px solid #d7dee7;
+        background: white;
+      }
+    }
+
+  </style>
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <div class="logo" aria-hidden="true"></div>
+      <h1>INNA Archive Viewer</h1>
+      <div id="archiveProfile" class="profile-chip hidden"></div>
+    </div>
+    <div class="toolbar">
+      <input id="search" type="search" placeholder="Search courses, files, assignments, grades..." />
+      <select id="termFilter"><option value="">All terms</option></select>
+      <button id="loadButton" class="secondary" type="button">Load archive_index.json</button>
+    </div>
+  </header>
+
+  <main id="app" class="hidden">
+    <aside>
+      <div id="courseList"></div>
+    </aside>
+    <section class="content">
+      <div id="viewerNote" class="viewer-note hidden"></div>
+      <div id="archiveWarning" class="archive-warning hidden"></div>
+      <div id="courseView"></div>
+    </section>
+  </main>
+
+  <section id="loader" class="drop">
+    <h2>Open an INNA archive</h2>
+    <p class="muted">Put this file beside <code>archive_index.json</code> in the archive root. For best results run:</p>
+    <pre>python -m http.server 8000</pre>
+    <p class="muted">Then open <code>http://localhost:8000/viewer.html</code>. Or use the button below to choose the JSON manually.</p>
+    <p><input id="fileInput" type="file" accept=".json,application/json" /></p>
+  </section>
+
+  <script id="embeddedArchive" type="application/json"></script>
+  <script>
+    const state = {
+      archive: null,
+      archiveWarningDismissed: false,
+      selectedCourseId: "__overall__",
+      tab: "overview",
+      query: "",
+      term: ""
+    };
+
+    const $ = (id) => document.getElementById(id);
+
+    function esc(value) {
+      return String(value ?? "")
+        .replaceAll("&", "&amp;")
+        .replaceAll("<", "&lt;")
+        .replaceAll(">", "&gt;")
+        .replaceAll('"', "&quot;");
+    }
+
+    function safeHref(pathOrUrl) {
+      if (!pathOrUrl) return "#";
+      const s = String(pathOrUrl);
+      if (/^https?:\/\//i.test(s) || /^mailto:/i.test(s)) return s;
+      return s.split("/").map(encodeURIComponent).join("/").replaceAll("%5C", "/");
+    }
+
+    function initialsFromName(name) {
+      return String(name || "?").split(/\s+/).filter(Boolean).slice(0, 2).map(x => x[0]).join("").toUpperCase() || "?";
+    }
+
+    function renderArchiveProfile() {
+      const holder = $("archiveProfile");
+      if (!holder || !state.archive) return;
+      const profile = state.archive.student_profile || state.archive.profile || {};
+      const name = profile.name || profile.studentName || profile.fullName || "";
+      const school = profile.school_short || profile.schoolShort || state.archive.school || "";
+      const photo = profile.photo || profile.profile_photo || profile.photo_path || "";
+      if (!name && !school && !photo) {
+        holder.classList.add("hidden");
+        holder.innerHTML = "";
+        return;
+      }
+      holder.classList.remove("hidden");
+      const image = photo
+        ? `<img src="${safeHref(photo)}" alt="">`
+        : `<div class="avatar">${esc(initialsFromName(name || school))}</div>`;
+      holder.innerHTML = `${image}<div><strong>${esc(name || "Student")}</strong><span class="meta-small">${esc(school || "INNA archive")}</span></div>`;
+    }
+
+    function renderArchiveWarning() {
+      const holder = $("archiveWarning");
+      if (!holder || !state.archive) return;
+      if (state.archiveWarningDismissed) {
+        holder.classList.add("hidden");
+        return;
+      }
+      const summary = state.archive.summary || {};
+      const failures = Number(summary.download_failures || 0);
+      const courseErrors = Number(summary.course_errors || (state.archive.errors || []).length || 0);
+      if (!failures && !courseErrors) {
+        holder.classList.add("hidden");
+        holder.classList.remove("good");
+        holder.innerHTML = "";
+        return;
+      }
+      const cats = summary.failure_categories || {};
+      const catText = Object.keys(cats).length ? " · " + Object.entries(cats).map(([k, v]) => `${esc(k)}: ${esc(v)}`).join(" · ") : "";
+      holder.classList.remove("hidden");
+      holder.classList.remove("good");
+      holder.innerHTML = `<button id="archiveWarningClose" class="secondary warning-close" type="button" title="Close warning">×</button><strong>⚠ Archive warnings:</strong> ${failures} failed/dead-link record(s), ${courseErrors} course error(s).${catText} <a href="_download_failures/" target="_blank">Open failure folder</a>`;
+      const close = $("archiveWarningClose");
+      if (close) {
+        close.addEventListener("click", () => {
+          state.archiveWarningDismissed = true;
+          holder.classList.add("hidden");
+        });
+      }
+    }
+
+    function asList(value) {
+      return Array.isArray(value) ? value : [];
+    }
+
+
+    function numberFrom(value) {
+      if (value === null || value === undefined || value === "") return null;
+      if (typeof value === "number") return Number.isFinite(value) ? value : null;
+      const match = String(value).replace(",", ".").match(/-?\d+(?:\.\d+)?/);
+      return match ? Number(match[0]) : null;
+    }
+
+    function fmtNumber(value, digits = 2) {
+      if (value === null || value === undefined || Number.isNaN(value)) return "—";
+      if (Math.abs(value - Math.round(value)) < 1e-9) return String(Math.round(value));
+      return Number(value).toFixed(digits).replace(/0+$/, "").replace(/\.$/, "");
+    }
+
+    function isMetidCourse(course) {
+      const status = String(course.status || "").toLowerCase();
+      const code = String(course.course_code || course.moduleName || course.code || "").toLowerCase();
+      const name = String(course.course_name || course.moduleName2 || course.name || "").toLowerCase();
+      return Boolean(course.evaluated_elsewhere || status.includes("metið") || status.includes("metid") || status.includes("evaluated") || code.includes("(m)") || name.includes("(m)"));
+    }
+
+    function academicCourses() {
+      const courses = asList(state.archive?.courses);
+      return courses.filter(course => {
+        const term = course.term || course.termCode || "";
+        return !state.term || term === state.term;
+      });
+    }
+
+    function computeAcademicSummary(courses) {
+      let totalUnits = 0;
+      let metidUnits = 0;
+      let nonMetidWeightedUnits = 0;
+      let weightedSum = 0;
+      const nonMetidGrades = [];
+      let metidCount = 0;
+      let transcriptOnlyCount = 0;
+
+      for (const course of courses) {
+        const units = numberFrom(course.units || course.moduleUnits);
+        const grade = numberFrom(course.final_grade || course.finalGrade || course.grade);
+        const metid = isMetidCourse(course);
+
+        if (units !== null) {
+          totalUnits += units;
+          if (metid) metidUnits += units;
+        }
+        if (metid) metidCount += 1;
+        if (course.transcript_only || course.viewable === false) transcriptOnlyCount += 1;
+
+        if (!metid && grade !== null) {
+          nonMetidGrades.push(grade);
+          if (units !== null && units > 0) {
+            weightedSum += grade * units;
+            nonMetidWeightedUnits += units;
+          }
+        }
+      }
+
+      const avg = nonMetidGrades.length ? nonMetidGrades.reduce((a, b) => a + b, 0) / nonMetidGrades.length : null;
+      const weighted = nonMetidWeightedUnits ? weightedSum / nonMetidWeightedUnits : null;
+
+      return {
+        totalCourses: courses.length,
+        totalUnits,
+        metidUnits,
+        metidCount,
+        transcriptOnlyCount,
+        nonMetidGradeCount: nonMetidGrades.length,
+        avg,
+        weighted,
+        progress200: totalUnits ? Math.min(totalUnits / 200 * 100, 100) : 0,
+        progress240: totalUnits ? Math.min(totalUnits / 240 * 100, 100) : 0,
+      };
+    }
+
+    function renderOverallViewer() {
+      const courses = academicCourses();
+      const summary = computeAcademicSummary(courses);
+      const q = state.query.trim().toLowerCase();
+      const tableCourses = courses.filter(course => !q || JSON.stringify(course).toLowerCase().includes(q));
+
+      $("courseView").innerHTML = `
+        <section class="hero">
+          <h2>Námsyfirlit · Overall viewer</h2>
+          <div class="meta">
+            <span>Courses: <strong>${summary.totalCourses}</strong></span>
+            <span>Total einingar: <strong>${fmtNumber(summary.totalUnits)}</strong></span>
+            <span>Metið/(M): <strong>${summary.metidCount}</strong></span>
+            ${state.term ? `<span>Term filter: <strong>${esc(state.term)}</strong></span>` : ""}
+          </div>
+        </section>
+
+        <section class="grid">
+          <div class="stat"><div class="num">${fmtNumber(summary.totalUnits)}</div><div class="label">Total einingar</div></div>
+          <div class="stat"><div class="num">${fmtNumber(summary.avg)}</div><div class="label">Average grade, non-M</div></div>
+          <div class="stat"><div class="num">${fmtNumber(summary.weighted)}</div><div class="label">Weighted avg., non-M</div></div>
+          <div class="stat"><div class="num">${summary.transcriptOnlyCount}</div><div class="label">Transcript-only courses</div></div>
+        </section>
+
+        <section class="section">
+          <h3>Graduation credit guide</h3>
+          <div class="section-body">
+            <p class="muted">Many Icelandic upper-secondary tracks require roughly 200–240 einingar. This is a simple tally from archived transcript course rows, not an official graduation audit.</p>
+            <div class="credit-meter">
+              <div class="credit-meter-row">
+                <div><strong>200 einingar</strong><span>${fmtNumber(summary.totalUnits)} / 200</span></div>
+                <div class="credit-bar"><div style="width:${summary.progress200}%"></div></div>
+              </div>
+              <div class="credit-meter-row">
+                <div><strong>240 einingar</strong><span>${fmtNumber(summary.totalUnits)} / 240</span></div>
+                <div class="credit-bar"><div style="width:${summary.progress240}%"></div></div>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="section">
+          <h3>All transcript courses</h3>
+          <div class="section-body">
+            <table>
+              <thead><tr><th>Term</th><th>Course</th><th>Name</th><th>Status</th><th>Einkunn</th><th>Einingar</th><th>Archive</th></tr></thead>
+              <tbody>
+                ${tableCourses.map(course => {
+                  const metid = isMetidCourse(course);
+                  const id = course.id;
+                  return `
+                    <tr>
+                      <td>${esc(course.term || course.termCode || "")}</td>
+                      <td><strong>${esc(course.course_code || course.moduleName || course.code || "")}</strong>${metid ? ` <span class="badge">M</span>` : ""}</td>
+                      <td>${esc(course.course_name || course.moduleName2 || course.name || "")}</td>
+                      <td>${esc(course.status || "")}</td>
+                      <td><strong>${esc(course.final_grade || course.finalGrade || course.grade || "")}</strong></td>
+                      <td>${esc(course.units || course.moduleUnits || "")}</td>
+                      <td>${course.transcript_only || course.viewable === false ? `<span class="muted">Transcript only</span>` : `<button class="buttonlike mini-course-open" data-course-open="${esc(id)}" type="button">Open course</button>`}</td>
+                    </tr>
+                  `;
+                }).join("") || `<tr><td colspan="7">No courses match the current filter.</td></tr>`}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      `;
+
+      document.querySelectorAll("[data-course-open]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          state.selectedCourseId = btn.dataset.courseOpen;
+          state.tab = "overview";
+          render();
+        });
+      });
+    }
+
+    function courseId(course) {
+      return course.id || `${course.term || ""}-${course.group_id || course.groupId || ""}-${course.course_code || course.moduleName || ""}`;
+    }
+
+    function courseLabel(course) {
+      const code = course.course_code || course.moduleName || course.code || "Unknown course";
+      const name = course.course_name || course.moduleName2 || course.name || "";
+      return `${code}${name ? " - " + name : ""}`;
+    }
+
+    function assignmentType(a) {
+      if (a.type_label) return a.type_label;
+      if (String(a.exam) === "1" || String(a.type) === "1") return "Próf";
+      return "Verkefni";
+    }
+
+    function pathLink(label, path, extra = "") {
+      if (!path) return `<span class="muted">Missing</span>`;
+      const href = safeHref(path);
+      const isMail = /^mailto:/i.test(String(path));
+      const isHttp = /^https?:\/\//i.test(String(path));
+      const target = isMail ? ` target="_blank" rel="noreferrer"` : ``;
+      const preview = isMail ? `` : ` data-preview="${esc(href)}"`;
+      const hint = isHttp ? `<span class="open-hint">external</span>` : ``;
+      return `<a href="${href}"${preview}${target}>${esc(label || path)}</a>${hint}${extra}`;
+    }
+
+    function setArchive(archive, note = "") {
+      state.archive = normalizeArchive(archive);
+      state.archiveWarningDismissed = false;
+      state.selectedCourseId = "__overall__";
+      $("loader").classList.add("hidden");
+      $("app").classList.remove("hidden");
+      $("viewerNote").classList.toggle("hidden", !note);
+      $("viewerNote").textContent = note;
+      hydrateTerms();
+      renderArchiveProfile();
+      renderArchiveWarning();
+      render();
+    }
+
+    function normalizeArchive(archive) {
+      const courses = asList(archive.courses).map((course, index) => ({
+        ...course,
+        id: course.id || courseId(course) || String(index),
+        materials: asList(course.materials || course.files),
+        assignments: asList(course.assignments || course.projects),
+        grades: asList(course.grades),
+        booklist: asList(course.booklist),
+        transcript_only: Boolean(course.transcript_only || course.viewable === false || !course.group_id && !course.groupId),
+        classmates: asList(course.classmates || course.co_students || course.hopalisti)
+      }));
+      return { ...archive, courses };
+    }
+
+    function hydrateTerms() {
+      const select = $("termFilter");
+      const terms = [...new Set(state.archive.courses.map(c => c.term || c.termCode).filter(Boolean))].sort();
+      select.innerHTML = `<option value="">All terms</option>` + terms.map(t => `<option value="${esc(t)}">${esc(t)}</option>`).join("");
+    }
+
+    function matchesQuery(course) {
+      const q = state.query.trim().toLowerCase();
+      if (!q) return true;
+      const hay = JSON.stringify(course).toLowerCase();
+      return hay.includes(q);
+    }
+
+    function visibleCourses() {
+      return state.archive.courses.filter(course => {
+        const term = course.term || course.termCode || "";
+        return (!state.term || term === state.term) && matchesQuery(course);
+      });
+    }
+
+    function render() {
+      renderCourseList();
+      if (state.selectedCourseId === "__overall__") {
+        renderOverallViewer();
+        return;
+      }
+      const course = state.archive.courses.find(c => c.id === state.selectedCourseId) || visibleCourses()[0] || state.archive.courses[0];
+      if (!course) {
+        renderOverallViewer();
+        return;
+      }
+      state.selectedCourseId = course.id;
+      renderCourse(course);
+    }
+
+    function renderCourseList() {
+      const courses = visibleCourses();
+      const overallActive = state.selectedCourseId === "__overall__" ? " active" : "";
+      const summary = computeAcademicSummary(academicCourses());
+      const overallCard = `
+        <article class="course-card${overallActive}" data-course="__overall__">
+          <div class="course-code">NÁMSYFIRLIT</div>
+          <div class="course-name">Overall viewer · ${fmtNumber(summary.totalUnits)} einingar</div>
+          <div class="badge-row">
+            <span class="badge">${summary.totalCourses} courses</span>
+            <span class="badge orange">${fmtNumber(summary.weighted)} weighted avg.</span>
+          </div>
+        </article>
+      `;
+      $("courseList").innerHTML = overallCard + (courses.map(course => {
+        const active = course.id === state.selectedCourseId ? " active" : "";
+        const term = course.term || course.termCode || "";
+        const grade = course.final_grade || course.finalGrade || course.grade || "";
+        const metid = isMetidCourse(course);
+        const transcriptOnly = course.transcript_only || course.viewable === false;
+        return `
+          <article class="course-card${active}" data-course="${esc(course.id)}">
+            <div class="course-code">${esc(course.course_code || course.moduleName || course.code || "Course")}${metid ? " (M)" : ""}</div>
+            <div class="course-name">${esc(course.course_name || course.moduleName2 || course.subjectName || "")}</div>
+            <div class="badge-row">
+              ${term ? `<span class="badge">${esc(term)}</span>` : ""}
+              ${grade ? `<span class="badge orange">Final ${esc(grade)}</span>` : ""}
+              ${course.units ? `<span class="badge">${esc(course.units)} ein.</span>` : ""}
+              ${transcriptOnly ? `<span class="badge">Transcript only</span>` : `<span class="badge blue">${asList(course.assignments).length} assignments</span><span class="badge">${asList(course.materials).length} files</span>`}
+            </div>
+          </article>
+        `;
+      }).join("") || `<div class="empty">No courses match the search.</div>`);
+
+      document.querySelectorAll(".course-card").forEach(card => {
+        card.addEventListener("click", () => {
+          state.selectedCourseId = card.dataset.course;
+          render();
+        });
+      });
+    }
+
+    function renderCourse(course) {
+      const code = course.course_code || course.moduleName || course.code || "";
+      const name = course.course_name || course.moduleName2 || course.subjectName || "";
+      const term = course.term || course.termCode || "";
+      const teacher = course.teacher || course.teachers || "";
+      const finalGrade = course.final_grade || course.finalGrade || course.grade || "";
+      const totalFiles = asList(course.materials).length + asList(course.assignments).flatMap(a => asList(a.files || a.attachments || a.submitted_files)).length;
+
+      $("courseView").innerHTML = `
+        <section class="hero">
+          <h2>${esc(code)} ${name ? "· " + esc(name) : ""}</h2>
+          <div class="meta">
+            ${term ? `<span>Term: <strong>${esc(term)}</strong></span>` : ""}
+            ${teacher ? `<span>Teacher: <strong>${esc(teacher)}</strong></span>` : ""}
+            ${finalGrade ? `<span>Final grade: <strong>${esc(finalGrade)}</strong></span>` : ""}
+            ${course.units ? `<span>Einingar: <strong>${esc(course.units)}</strong></span>` : ""}
+            ${course.status ? `<span>Status: <strong>${esc(course.status)}</strong></span>` : ""}
+            ${course.group_id || course.groupId ? `<span>Group ID: <strong>${esc(course.group_id || course.groupId)}</strong></span>` : ""}
+            ${course.transcript_only || course.viewable === false ? `<span>Transcript only / no INNA course room</span>` : ""}
+          </div>
+        </section>
+
+        <section class="grid">
+          <div class="stat"><div class="num">${asList(course.assignments).length}</div><div class="label">Assignments / tests</div></div>
+          <div class="stat"><div class="num">${asList(course.materials).length}</div><div class="label">Teacher materials</div></div>
+          <div class="stat"><div class="num">${asList(course.grades).length}</div><div class="label">Grade entries</div></div>
+          <div class="stat"><div class="num">${totalFiles}</div><div class="label">Linked/downloaded files</div></div>
+        </section>
+
+        <nav class="tabs">
+          ${tabButton("overview", "Overview")}
+          ${tabButton("materials", "Efni")}
+          ${tabButton("assignments", "Verkefni / Próf")}
+          ${tabButton("grades", "Grades")}
+          ${tabButton("booklist", "Námsgagnalisti")}
+          ${tabButton("classmates", "Hópalisti")}
+        </nav>
+
+        <div id="previewBackdrop" class="preview-backdrop hidden"></div>
+        <section id="previewShell" class="preview-shell hidden" aria-label="File preview">
+          <div class="preview-header">
+            <div id="previewTitle" class="preview-title">Preview</div>
+            <div class="preview-actions">
+              <a id="previewOpenNew" class="buttonlike" href="#" target="_blank" rel="noreferrer">Open in new tab</a>
+              <button id="previewClose" class="secondary" type="button">Close</button>
+            </div>
+          </div>
+          <iframe id="previewFrame" class="preview-frame" title="Archive file preview"></iframe>
+        </section>
+
+        <div id="tabBody"></div>
+      `;
+      document.querySelectorAll(".tab").forEach(btn => {
+        btn.addEventListener("click", () => {
+          state.tab = btn.dataset.tab;
+          renderCourse(course);
+        });
+      });
+      renderTab(course);
+    }
+
+    function tabButton(tab, label) {
+      return `<button class="tab ${state.tab === tab ? "active" : ""}" data-tab="${tab}" type="button">${esc(label)}</button>`;
+    }
+
+    function renderTab(course) {
+      const body = $("tabBody");
+      if (state.tab === "overview") body.innerHTML = renderOverview(course);
+      if (state.tab === "materials") body.innerHTML = renderMaterials(course);
+      if (state.tab === "assignments") body.innerHTML = renderAssignments(course);
+      if (state.tab === "grades") body.innerHTML = renderGrades(course);
+      if (state.tab === "booklist") body.innerHTML = renderBooklist(course);
+      if (state.tab === "classmates") body.innerHTML = renderClassmates(course);
+      attachPreviewHandlers();
+    }
+
+    function renderOverview(course) {
+      const links = [
+        ["Course overview HTML", course.overview_html],
+        ["Course overview PDF", course.overview_pdf],
+        ["Course metadata JSON", course.metadata_json || course.metadata_path],
+        ["Course folder", course.folder]
+      ].filter(x => x[1]);
+
+      return `
+        ${course.transcript_only || course.viewable === false ? `
+          <section class="section">
+            <h3>Transcript-only course</h3>
+            <div class="section-body">
+              <div class="viewer-note">This course is preserved from the study record only. INNA did not expose a course room/groupId, so there are no materials or assignments to download. This is common for Metið/(M) courses.</div>
+            </div>
+          </section>
+        ` : ""}
+        <section class="section">
+          <h3>Offline course copy</h3>
+          <div class="section-body">
+            ${links.length ? `<ul class="file-list">${links.map(([label, path]) => `<li>${pathLink(label, path)}</li>`).join("")}</ul>` : `<div class="empty">No course-level offline files listed yet.</div>`}
+          </div>
+        </section>
+        ${renderMaterials(course, true)}
+        ${renderAssignments(course, true)}
+      `;
+    }
+
+    function renderMaterials(course, compact = false) {
+      const byGroup = {};
+      asList(course.materials).forEach(file => {
+        const group = file.group || file.fileGroup || file.file_group || "Other";
+        byGroup[group] ||= [];
+        byGroup[group].push(file);
+      });
+      const groups = Object.entries(byGroup);
+      return `
+        <section class="section">
+          <h3 class="blue">Efni</h3>
+          <div class="section-body">
+            ${groups.length ? groups.map(([group, files]) => `
+              <details open>
+                <summary><span>${esc(group)}</span><span class="badge">${files.length}</span></summary>
+                <div class="details-body">
+                  <table>
+                    <thead><tr><th>Date</th><th>Title</th><th>Type</th><th>Offline file / link</th></tr></thead>
+                    <tbody>
+                      ${files.map(file => `
+                        <tr>
+                          <td>${esc(file.date || file.displayDate || file.display || "")}</td>
+                          <td>${esc(file.title || file.description || file.name || file.fileName || "")}</td>
+                          <td>${esc(file.content_type || file.contentType || file.type || "")}</td>
+                          <td>${pathLink(file.path ? "Open" : (file.url ? "Open original link" : "Missing"), file.path || file.link_file || file.url)}</td>
+                        </tr>
+                      `).join("")}
+                    </tbody>
+                  </table>
+                </div>
+              </details>
+            `).join("") : `<div class="empty">No materials listed.</div>`}
+          </div>
+        </section>
+      `;
+    }
+
+    function hasTeacherFeedback(a) {
+      if (a.feedback_text || a.teacher_feedback || a.commentByTeacher || a.feedback_html) return true;
+      const files = asList(a.files || a.attachments || a.submitted_files);
+      return files.some(f => String(f.kind || "").toLowerCase().includes("feedback"));
+    }
+
+    function renderAssignments(course, compact = false) {
+      const assignments = asList(course.assignments);
+      return `
+        <section class="section">
+          <h3 class="orange">Verkefni og próf</h3>
+          <div class="section-body">
+            ${assignments.length ? assignments.map(a => {
+              const title = a.title || a.name || "Untitled assignment";
+              const grade = a.grade ? ` · grade ${a.grade}` : "";
+              const due = a.due_date || a.returnDate || a.handInFullDate || "";
+              const files = asList(a.files || a.attachments || a.submitted_files);
+              const feedback = hasTeacherFeedback(a);
+              return `
+                <details>
+                  <summary>
+                    <span class="assignment-title-row">${feedback ? `<span class="feedback-icon" title="Teacher feedback archived">💬</span>` : ""}<span>${esc(title)}</span></span>
+                    <span>
+                      ${feedback ? `<span class="badge feedback">Feedback</span>` : ""}
+                      <span class="badge orange">${esc(assignmentType(a))}</span>
+                      ${a.grade ? `<span class="badge">Grade ${esc(a.grade)}</span>` : ""}
+                    </span>
+                  </summary>
+                  <div class="details-body">
+                    <table>
+                      <tbody>
+                        <tr><th>Due date</th><td>${esc(due)}</td></tr>
+                        <tr><th>Assigned</th><td>${esc(a.assigned_date || a.assignedFullDate || "")}</td></tr>
+                        <tr><th>Submitted</th><td>${esc(a.submitted_date || a.studentHandedInFullDate || a.studentHandedInDate || "")}</td></tr>
+                        <tr><th>Status</th><td>${esc(a.status || (a.handedIn || a.handed_in ? "Submitted" : ""))}</td></tr>
+                        <tr><th>Weight</th><td>${esc(a.weight || "")}</td></tr>
+                        <tr><th>Offline page</th><td>${pathLink("HTML", a.html || a.assignment_html)} ${a.pdf || a.assignment_pdf ? " · " + pathLink("PDF", a.pdf || a.assignment_pdf) : ""} ${a.metadata ? " · " + pathLink("JSON", a.metadata) : ""}</td></tr>
+                      </tbody>
+                    </table>
+                    ${a.feedback_text || a.teacher_feedback || a.commentByTeacher ? `
+                      <h4>Teacher feedback</h4>
+                      <div class="panel">${a.feedback_html || a.commentByTeacher || esc(a.feedback_text || a.teacher_feedback)}</div>
+                    ` : ""}
+                    ${files.length ? `
+                      <h4>Files</h4>
+                      <ul class="file-list">
+                        ${files.map(f => `<li>${pathLink(f.name || f.fileName || f.title || "Open file", f.path || f.url)} <span class="muted">${esc(f.content_type || f.contentType || "")}</span></li>`).join("")}
+                      </ul>
+                    ` : ""}
+                  </div>
+                </details>
+              `;
+            }).join("") : `<div class="empty">No assignments listed.</div>`}
+          </div>
+        </section>
+      `;
+    }
+
+    function renderGrades(course) {
+      const grades = asList(course.grades);
+      return `
+        <section class="section">
+          <h3>Grades</h3>
+          <div class="section-body">
+            ${grades.length ? `
+              <table>
+                <thead><tr><th>Name</th><th>Grade</th><th>Weight</th><th>Type</th><th>Assignment</th></tr></thead>
+                <tbody>
+                  ${grades.map(g => `
+                    <tr>
+                      <td>${esc(g.name || g.gradeRule || "")}</td>
+                      <td><strong>${esc(g.grade || "")}</strong></td>
+                      <td>${esc(g.weight || g.recalculatedWeight || "")}</td>
+                      <td>${esc(g.finalGrade ? "Final" : (g.gradeRule || ""))}</td>
+                      <td>${g.assignment_pdf ? pathLink("Open", g.assignment_pdf) : esc(g.assignmentId || "")}</td>
+                    </tr>
+                  `).join("")}
+                </tbody>
+              </table>
+            ` : `<div class="empty">No grade entries listed.</div>`}
+          </div>
+        </section>
+      `;
+    }
+
+    function renderBooklist(course) {
+      const books = asList(course.booklist);
+      return `
+        <section class="section">
+          <h3>Námsgagnalisti</h3>
+          <div class="section-body">
+            ${books.length ? `
+              <table>
+                <thead><tr><th>Title</th><th>Author</th><th>Publisher</th><th>Issued</th></tr></thead>
+                <tbody>
+                  ${books.map(b => `
+                    <tr>
+                      <td>${esc(b.title || b.bookname || b.name || "")}</td>
+                      <td>${esc(b.author || b.hofundur || "")}</td>
+                      <td>${esc(b.publisher || b.utgefandi || "")}</td>
+                      <td>${esc(b.year || b.utgafa || "")}</td>
+                    </tr>
+                  `).join("")}
+                </tbody>
+              </table>
+            ` : `<div class="empty">No book/material list entries.</div>`}
+          </div>
+        </section>
+      `;
+    }
+
+    function renderClassmates(course) {
+      const classmates = asList(course.classmates);
+      return `
+        <section class="section">
+          <h3>Hópalisti</h3>
+          <div class="section-body">
+            ${classmates.length ? `
+              <table>
+                <thead><tr><th>Name</th><th>Email</th></tr></thead>
+                <tbody>
+                  ${classmates.map(p => `
+                    <tr>
+                      <td>${esc(p.name || p.fullName || "")}</td>
+                      <td>${p.email || p.personalEmail ? `<a href="mailto:${esc(p.email || p.personalEmail)}">${esc(p.email || p.personalEmail)}</a>` : ""}</td>
+                    </tr>
+                  `).join("")}
+                </tbody>
+              </table>
+            ` : `<div class="empty">No classmate list archived.</div>`}
+          </div>
+        </section>
+      `;
+    }
+
+    function openPreview(href, label) {
+      const shell = $("previewShell");
+      const backdrop = $("previewBackdrop");
+      const frame = $("previewFrame");
+      const title = $("previewTitle");
+      const openNew = $("previewOpenNew");
+      if (!shell || !frame) return false;
+      title.textContent = label || href;
+      openNew.href = href;
+      frame.src = href;
+      shell.classList.remove("hidden");
+      backdrop.classList.remove("hidden");
+      return true;
+    }
+
+    function closePreview() {
+      const shell = $("previewShell");
+      const backdrop = $("previewBackdrop");
+      const frame = $("previewFrame");
+      if (frame) frame.src = "about:blank";
+      if (shell) shell.classList.add("hidden");
+      if (backdrop) backdrop.classList.add("hidden");
+    }
+
+    function attachPreviewHandlers() {
+      const close = $("previewClose");
+      const backdrop = $("previewBackdrop");
+      if (close) close.onclick = closePreview;
+      if (backdrop) backdrop.onclick = closePreview;
+      document.querySelectorAll("a[data-preview]").forEach(link => {
+        link.onclick = (event) => {
+          const href = link.getAttribute("data-preview") || link.getAttribute("href");
+          if (!href || href === "#") return;
+          // External sites often refuse iframes; local archive files usually preview nicely.
+          if (/^https?:\/\//i.test(href)) {
+            openPreview(href, link.textContent || href);
+            event.preventDefault();
+            return;
+          }
+          openPreview(href, link.textContent || href);
+          event.preventDefault();
+        };
+      });
+    }
+
+    async function tryAutoload() {
+      const embedded = $("embeddedArchive").textContent.trim();
+      if (embedded) {
+        try { setArchive(JSON.parse(embedded), "Loaded embedded archive data."); return; }
+        catch (e) { console.warn("Embedded archive JSON was invalid", e); }
+      }
+
+      try {
+        const response = await fetch("archive_index.json", { cache: "no-store" });
+        if (!response.ok) throw new Error("No archive_index.json found");
+        const archive = await response.json();
+        setArchive(archive, "Loaded archive_index.json. If links do not open from file://, run python -m http.server in the archive folder.");
+      } catch (err) {
+        $("loader").classList.remove("hidden");
+      }
+    }
+
+    $("fileInput").addEventListener("change", async (event) => {
+      const file = event.target.files[0];
+      if (!file) return;
+      const text = await file.text();
+      setArchive(JSON.parse(text), "Loaded JSON with the file picker. Put viewer.html in the archive root so relative file links point at the right files.");
+    });
+
+    $("loadButton").addEventListener("click", () => $("fileInput").click());
+    $("search").addEventListener("input", (event) => {
+      state.query = event.target.value;
+      render();
+    });
+    $("termFilter").addEventListener("change", (event) => {
+      state.term = event.target.value;
+      render();
+    });
+
+    tryAutoload();
+  </script>
+</body>
+</html>
