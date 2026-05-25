@@ -1,1 +1,3 @@
-Þetta tól var í mesta leyti framleitt af CHATGPT við neyð, vegna þess að skólar eyða nemandagögnum oft stutt eftir að þeir útskrifast. Þetta tól og öll gögn hafa enga tengingu við INNU eða ADVANIA. Þú skalt nota tólið á hátt sem veldur ekki broti á gagnagrunn eða reglum INNU.
+# Innagunn - Tól til varðveislu skólagagna.
+
+Þetta tól var í mesta leyti framleitt af CHATGPT við neyð, vegna þess að skólar eyða nemandagögnum oft stutt eftir að þeir útskrifast. Þetta tól og öll gögn hafa enga tengingu við INNU eða ADVANIA. Þú skalt nota tólið á hátt sem veldur ekki broti á gagnagrunn eða reglum INNU. Þú hefur ekki alfarið rétt á að deila gögnum frá þessu og skalt þessvegna forðast þess yfir höfuð.
